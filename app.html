@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Text To Speech</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap');
+
+    :root {
+      --bg: #f5f2ed;
+      --surface: #fffef9;
+      --surface2: #f0ece4;
+      --border: rgba(0,0,0,0.10);
+      --text: #1a1814;
+      --text-muted: #7a756b;
+      --accent: #c8531a;
+      --accent-hover: #a8431a;
+      --accent-light: #fdf0e8;
+      --green: #2e7d32;
+      --green-light: #e8f5e9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 20px 60px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 44px;
+      width: 100%;
+      max-width: 640px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+    }
+
+    header {
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    /* Textarea */
+    .textarea-wrap {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 160px;
+      padding: 14px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      color: var(--text);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+      line-height: 1.6;
+    }
+
+    textarea::placeholder { color: var(--text-muted); }
+    textarea:focus { border-color: var(--accent); }
+
+    .char-count {
+      position: absolute;
+      bottom: 10px;
+      right: 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Controls row */
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover { background: var(--surface2); transform: translateY(-1px); }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: transparent;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn svg { width: 15px; height: 15px; fill: currentColor; flex-shrink: 0; }
+
+    /* Options grid */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .option-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a756b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 34px;
+      transition: border-color 0.2s;
+    }
+
+    select:focus { border-color: var(--accent); }
+
+    /* Pitch / Volume sliders */
+    .sliders-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+
+    .slider-group label span { font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+    input[type=range] {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px var(--accent);
+      cursor: pointer;
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
+      transition: all 0.3s;
+    }
+
+    .status-bar.speaking {
+      background: var(--green-light);
+      border-color: rgba(46,125,50,0.2);
+      color: var(--green);
+    }
+
+    .status-bar.paused {
+      background: var(--accent-light);
+      border-color: rgba(200,83,26,0.2);
+      color: var(--accent);
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+
+    .dot.pulse {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.75); }
+    }
+
+    /* Mobile */
+    @media (max-width: 520px) {
+      .card { padding: 28px 22px; }
+      h1 { font-size: 26px; }
+      .options-grid, .sliders-grid { grid-template-columns: 1fr; }
+      .controls { flex-direction: column; }
+      .btn { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <header>
+      <h1>Text to Speech</h1>
+      <p class="subtitle">Works entirely in your browser — no internet required</p>
+    </header>
+
+    <div class="textarea-wrap">
+      <textarea id="textInput" placeholder="Type or paste your text here…" oninput="updateCharCount()"></textarea>
+      <span class="char-count" id="charCount">0</span>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-primary" onclick="speakText()">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        Speak
+      </button>
+      <button class="btn" id="pauseBtn" onclick="togglePause()">
+        <svg viewBox="0 0 24 24" id="pauseIcon"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        <span id="pauseLabel">Pause</span>
+      </button>
+      <button class="btn" onclick="stopSpeech()">
+        <svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+        Stop
+      </button>
+      <button class="btn" onclick="clearText()" style="margin-left:auto">
+        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        Clear
+      </button>
+    </div>
+
+    <div class="options-grid">
+      <div class="option-group">
+        <label>Voice</label>
+        <select id="voiceSelect" onchange="updateVoice()">
+          <option value="">Loading voices…</option>
+        </select>
+      </div>
+      <div class="option-group">
+        <label>Speed</label>
+        <select id="speedSelect" onchange="updateSpeed()">
+          <option value="0.5">0.5×</option>
+          <option value="0.75">0.75×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.25">1.25×</option>
+          <option value="1.5">1.5×</option>
+          <option value="1.75">1.75×</option>
+          <option value="2">2×</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sliders-grid">
+      <div class="slider-group">
+        <label>Pitch <span id="pitchVal">1.0</span></label>
+        <input type="range" id="pitchSlider" min="0.5" max="2" step="0.1" value="1" oninput="updatePitch(this.value)">
+      </div>
+      <div class="slider-group">
+        <label>Volume <span id="volVal">100%</span></label>
+        <input type="range" id="volSlider" min="0" max="1" step="0.05" value="1" oninput="updateVolume(this.value)">
+      </div>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Ready</span>
+    </div>
+  </div>
+
+  <script>
+    speechSynthesis.cancel();
+
+    var utterance = new SpeechSynthesisUtterance();
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    var isSpeaking = false;
+    var isPaused = false;
+    var voices = [];
+
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      if (!voices.length) return;
+      var sel = document.getElementById('voiceSelect');
+      sel.innerHTML = '';
+      voices.forEach(function(v, i) {
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = v.name + (v.localService ? '' : ' ✦');
+        sel.appendChild(opt);
+      });
+      utterance.voice = voices[0];
+    }
+
+    speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+
+    function updateVoice() {
+      var idx = document.getElementById('voiceSelect').value;
+      if (voices[idx]) utterance.voice = voices[idx];
+    }
+
+    function updateSpeed() {
+      utterance.rate = parseFloat(document.getElementById('speedSelect').value);
+    }
+
+    function updatePitch(v) {
+      utterance.pitch = parseFloat(v);
+      document.getElementById('pitchVal').textContent = parseFloat(v).toFixed(1);
+    }
+
+    function updateVolume(v) {
+      utterance.volume = parseFloat(v);
+      document.getElementById('volVal').textContent = Math.round(v * 100) + '%';
+    }
+
+    function updateCharCount() {
+      var len = document.getElementById('textInput').value.length;
+      document.getElementById('charCount').textContent = len;
+    }
+
+    function setStatus(state, msg) {
+      var bar = document.getElementById('statusBar');
+      var dot = document.getElementById('statusDot');
+      bar.className = 'status-bar' + (state ? ' ' + state : '');
+      dot.className = 'dot' + (state === 'speaking' ? ' pulse' : '');
+      document.getElementById('statusText').textContent = msg;
+    }
+
+    function speakText() {
+      var text = document.getElementById('textInput').value.trim();
+      if (!text) { setStatus('', 'Please enter some text first.'); return; }
+      speechSynthesis.cancel();
+      utterance.text = text;
+      utterance.onstart = function() { isSpeaking = true; isPaused = false; setStatus('speaking', 'Speaking…'); };
+      utterance.onend = function() { isSpeaking = false; isPaused = false; resetPauseBtn(); setStatus('', 'Done'); };
+      utterance.onerror = function(e) { setStatus('', 'Error: ' + e.error); };
+      speechSynthesis.speak(utterance);
+    }
+
+    function togglePause() {
+      if (!isSpeaking && !isPaused) return;
+      if (!isPaused) {
+        speechSynthesis.pause();
+        isPaused = true;
+        isSpeaking = false;
+        document.getElementById('pauseIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+        document.getElementById('pauseLabel').textContent = 'Resume';
+        setStatus('paused', 'Paused');
+      } else {
+        speechSynthesis.resume();
+        isPaused = false;
+        isSpeaking = true;
+        resetPauseBtn();
+        setStatus('speaking', 'Speaking…');
+      }
+    }
+
+    function resetPauseBtn() {
+      document.getElementById('pauseIcon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+      document.getElementById('pauseLabel').textContent = 'Pause';
+    }
+
+    function stopSpeech() {
+      speechSynthesis.cancel();
+      isSpeaking = false;
+      isPaused = false;
+      resetPauseBtn();
+      setStatus('', 'Stopped');
+    }
+
+    function clearText() {
+      document.getElementById('textInput').value = '';
+      document.getElementById('charCount').textContent = '0';
+      stopSpeech();
+      setStatus('', 'Ready');
+    }
+  </script>
+</body>
+</html>
